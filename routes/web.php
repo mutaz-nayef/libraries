@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CityController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,4 +19,5 @@ Route::get('/', function () {
 });
 Route::prefix('cms/admin')->group(function () {
     Route::view('/', 'cms.temp');
+    Route::resource('cities', CityController::class);
 });
