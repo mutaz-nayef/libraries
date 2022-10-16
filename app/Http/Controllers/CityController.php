@@ -14,7 +14,10 @@ class CityController extends Controller
      */
     public function index()
     {
-        //
+        $cities = City::all();
+        return response()->view('cms.cites.index', [
+            'cities' => $cities
+        ]);
     }
 
     /**
