@@ -1,16 +1,13 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Auth\EmailVerificationController;
-use App\Http\Controllers\CityController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
-use App\Mail\UserWelcomeEmail;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\AuthorController;
+use App\Http\Controllers\BookCommentController;
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\LibraryLikesController;
+use App\Http\Controllers\ManagerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,61 +21,43 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('test', function() {
+    return response()->json(['data' => 'You have liked the Library'], 200);
+});
+Route::get('test/books',function(){
+   return view("test");
 });
 
-Route::prefix('cms/')->middleware('guest:admin,user')->group(function () {
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-    Route::get('/{guard}/login', [AuthController::class, 'show'])->name('cms.login');
-    Route::post('login', [AuthController::class, 'login']);
+Route::get('/admin/dashboard', [AdminController::class, 'index'])->middleware('can:admin')->name('admin.dashboard');
+Route::get('/admin/user/update{user:id}', [AdminController::class, 'update'])->middleware('can:admin')->name('admin.user.update');
 
-    Route::get('forget-password', [ResetPasswordController::class, 'showForgetPassword'])
-        ->name('password.forget');
-    Route::post('forget-password', [ResetPasswordController::class, 'sendResetEmail'])->name('password.email');
-    Route::get('reset-password/{token}', [ResetPasswordController::class, 'resetPassword'])->name('password.reset');
-    Route::post('reset-password', [ResetPasswordController::class, 'updatePassword'])->name('password.update');
-});
-Route::prefix('cms/admin')->middleware(['auth:admin', 'verified'])->group(function () {
-    Route::resource('admins', AdminController::class);
-    Route::resource('roles', RoleController::class);
-    Route::resource('permissions', PermissionController::class);
-});
+Route::get('/manager/books', [ManagerController::class, 'index'])->middleware('can:manager')->name('manager.books');
+Route::post('/manager/books', [ManagerController::class, 'index'])->middleware('can:manager')->name('');
+Route::get('/manager/books/create', [ManagerController::class, 'create'])->middleware('can:manager')->name('manager.book.create');
+Route::post('/manager/books/store', [ManagerController::class, 'store'])->middleware('can:manager')->name('manager.book.store');
+Route::get('/manager/books/edit/{book:id}', [ManagerController::class, 'edit'])->middleware('can:manager')->name('manager.book.edit');
+Route::post('/manager/books/update/{book:id}', [ManagerController::class, 'update'])->middleware('can:manager')->name('manager.book.update');
+Route::get('/manager/books/destroy/{book:id}', [ManagerController::class, 'destroy'])->middleware('can:manager')->name('manager.book.destroy');
 
-Route::prefix('cms/admin')->middleware(['auth:admin,user', 'verified'])->group(function () {
-    Route::view('/', 'cms.temp');
-    Route::resource('cities', CityController::class);
-    Route::resource('users', UserController::class);
-    Route::get('logout', [AuthController::class, 'logout'])->name('cms.logout');
-});
-Route::prefix('cms/admin')->middleware(['auth:admin', 'verified'])->group(function () {
+Route::get('/libraries', [LibraryController::class, 'index'])->name('libraries.index');
+Route::get('/libraries/{library}', [LibraryController::class, 'show'])->name('library.show');
 
-    Route::get('roles/{role}/permissions/edit', [RoleController::class, 'editRolePermissions'])->name('roles.edit.permissions');
-    Route::put('roles/{role}/permissions/edit', [RoleController::class, 'updateRolePermissions']);
-    Route::get('users/{user}/permissions/edit', [UserController::class, 'editUserPermissions'])->name('user.edit.permissions');
-    Route::put('users/{user}/permissions/edit', [UserController::class, 'updateUserPermissions']);
-});
+Route::get('/library/create', [LibraryController::class, 'create'])->middleware('can:manager')->name('library.create');
+Route::post('/library/store', [LibraryController::class, 'store'])->middleware('can:manager')->name('library.store');
 
-Route::prefix('cms/admin')->middleware(['auth:admin'])->group(function () {
+Route::get('/books', [BookController::class, 'index'])->name('books.index');
+Route::get('/books/{book}', [BookController::class, 'show'])->name('book.show');
 
-    Route::get('verify', [EmailVerificationController::class, 'notice'])->name('verification.notice'); // this must be middleware:auth becace request->user get just auth user
-});
+Route::post('books/{book:id}/comments', [BookCommentController::class, 'store'])->middleware('auth');
 
-Route::middleware('ageCheck:20')->group(function () {
+Route::get('/authors', [AuthorController::class, 'index'])->name('authors.index');
+Route::get('/authors/{author:id}', [AuthorController::class, 'show'])->name('author.show');
 
-    // the argument 20 is a varibale in class agecheck its the same when you use auth:user , auth:admin // auth:guPPard
 
-    Route::get('news1', function () {
-        echo 'Hello world 1';
-        // dd(123);
-    });
-});
-// withoutMiddleware is not working with me ?!
-Route::get('news2', function () {
-    echo 'Hello world 2';
-})->middleware('ageCheck:18');
+Route::post('/libraries/{library}/like', [LibraryLikesController::class, 'store'])->middleware('auth')->name('like.library');
+//Route::delete('/libraries/{libraries}/like', [LibraryLikesController::class, 'destroy']);
+// Route::post('/books/{book:title}/comments',[BookCommentController::class ,'sotre']);
 
-Route::get('test-email', function () {
-    // return view('emails.user_welcome_email');
-    return new UserWelcomeEmail(User::first());
-});
+require __DIR__ . '/auth.php';
